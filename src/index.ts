@@ -13,7 +13,6 @@ import adminRoutes from "./routes/admin";
 import uploadRoutes from "./routes/upload";
 import contactRoutes from "./routes/contact";
 import blogRoutes from "./routes/blog";
-import { User } from "./models";
 
 const app = express();
 
@@ -22,6 +21,20 @@ app.use(cors({ origin: config.clientUrl, credentials: true }));
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+
+// Connect to DB on first request
+let dbConnected = false;
+app.use(async (_req, _res, next) => {
+  if (!dbConnected) {
+    try {
+      await connectDB();
+      dbConnected = true;
+    } catch (err) {
+      console.error("DB connection failed:", err);
+    }
+  }
+  next();
+});
 
 // Routes
 app.use("/api/auth", authRoutes);
@@ -37,36 +50,29 @@ app.use("/api/blog", blogRoutes);
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
 // Health check
-app.get("/api/health", (_, res) => {
-  res.json({ status: "ok", timestamp: new Date().toISOString() });
+app.get("/api/health", async (_, res) => {
+  try {
+    await connectDB();
+    res.json({ status: "ok", timestamp: new Date().toISOString() });
+  } catch (err: any) {
+    res.status(500).json({ status: "error", message: err.message });
+  }
 });
 
 // Error handling
 app.use(notFound);
 app.use(errorHandler);
 
-async function seedDefaultUsers() {
-  const defaults = [
-    { name: "Demo User", email: "demo@nexusai.com", password: "demo123456", role: "user" as const },
-    { name: "Admin", email: "admin@nexusai.com", password: "admin123456", role: "admin" as const },
-  ];
+// Export for Vercel serverless
+export default app;
 
-  for (const userData of defaults) {
-    const exists = await User.findOne({ email: userData.email });
-    if (!exists) {
-      await User.create(userData);
-      console.log(`Created ${userData.role} user: ${userData.email}`);
-    }
-  }
+// Local development
+if (process.env.NODE_ENV !== "production" || !process.env.VERCEL) {
+  const start = async () => {
+    await connectDB();
+    app.listen(config.port, () => {
+      console.log(`NexusAI server running on port ${config.port}`);
+    });
+  };
+  start();
 }
-
-// Start server
-const start = async () => {
-  await connectDB();
-  await seedDefaultUsers();
-  app.listen(config.port, () => {
-    console.log(`NexusAI server running on port ${config.port}`);
-  });
-};
-
-start();

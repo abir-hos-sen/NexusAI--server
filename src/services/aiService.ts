@@ -248,7 +248,7 @@ class AIService {
       title: history.length <= 1 ? message.slice(0, 50) : undefined,
     });
 
-    return { ...response, conversationId: convId! };
+    return { ...response, conversationId: convId as string };
   }
 
   // Generate response
@@ -354,7 +354,7 @@ Rules:
         contextNote = `\n\n[PRODUCTS FOUND: ${items.map((i: any) => `${i.title} - $${i.price}`).join("; ")}]`;
       }
 
-      const chat = model.startChat({ history: chatHistory });
+      const chat = model.startChat({ history: chatHistory as any });
       const result = await chat.sendMessage(message + contextNote);
       const reply = result.response.text() || "I couldn't generate a response. Please try again.";
 

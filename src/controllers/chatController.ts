@@ -87,7 +87,7 @@ export const chatController = {
             });
           }
 
-          const chat = model.startChat({ history: chatHistory });
+          const chat = model.startChat({ history: chatHistory as any });
           const result = await chat.sendMessageStream(message);
 
           let fullResponse = "";
@@ -205,9 +205,10 @@ export const chatController = {
           const styleDesc = stylePrompts[style] || stylePrompts.modern;
           const prompt = `Generate a high-quality image: ${description}. Style: ${styleDesc}. Professional quality, detailed, 4K resolution.`;
 
+          const genConfig: any = { responseModalities: ["TEXT", "IMAGE"] };
           const model = genAI.getGenerativeModel({
             model: "gemini-2.0-flash-preview-image-generation",
-            generationConfig: { responseModalities: ["TEXT", "IMAGE"] } as any,
+            generationConfig: genConfig,
           });
 
           const result = await model.generateContent(prompt);
@@ -257,7 +258,7 @@ export const chatController = {
       }
 
       const recommendations = await aiService.getRecommendations(
-        userId.toString(),
+        userId!.toString(),
         parseInt(limit as string) || 6,
         { category: category as string, minPrice: minPrice ? Number(minPrice) : undefined, maxPrice: maxPrice ? Number(maxPrice) : undefined, sort: sort as string }
       );

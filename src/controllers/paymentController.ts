@@ -94,7 +94,11 @@ export const paymentController = {
   async webhook(req: any, res: any) {
     try {
       const sig = req.headers["stripe-signature"];
-      const event = stripeService.constructWebhookEvent(req.body, sig);
+      if (!sig) {
+        return res.status(400).json({ success: false, message: "Missing stripe-signature header" });
+      }
+      const rawBody = Buffer.isBuffer(req.body) ? req.body : Buffer.from(JSON.stringify(req.body));
+      const event = stripeService.constructWebhookEvent(rawBody, sig);
 
       if (event.type === "checkout.session.completed") {
         const session = event.data.object as any;

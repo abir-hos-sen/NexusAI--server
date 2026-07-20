@@ -158,7 +158,15 @@ const KEYWORD_MAP: Record<string, string> = {
 const RESPONSE_PATTERNS: { pattern: RegExp; handler: (match: RegExpMatchArray) => string }[] = [
   {
     pattern: /^(hi|hello|hey|greetings|good\s*(morning|afternoon|evening)|assalam| salaam)/i,
-    handler: () => KNOWLEDGE_BASE.greeting[Math.floor(Math.random() * KNOWLEDGE_BASE.greeting.length)],
+    handler: () => {
+      const greetings = [
+        "Hello! Welcome to NexusAI! 😊 How can I help you today?",
+        "Hey there! 👋 I'm the NexusAI AI Assistant. What can I do for you?",
+        "Hi! Great to see you! 🌟 I'm here to help you find products, answer questions, or just chat. What's on your mind?",
+        "Welcome! 😊 I'm your NexusAI assistant. Ready to help you explore our marketplace or answer any questions!",
+      ];
+      return greetings[Math.floor(Math.random() * greetings.length)];
+    },
   },
   {
     pattern: /thank|thanks|thx|dhonnobad|shukriya/i,

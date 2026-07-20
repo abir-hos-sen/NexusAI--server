@@ -49,6 +49,11 @@ app.use("/api/blog", blogRoutes);
 // Serve uploaded files
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
+// Root
+app.get("/", (_, res) => {
+  res.json({ status: "ok", message: "NexusAI Server is running" });
+});
+
 // Health check
 app.get("/api/health", async (_, res) => {
   try {

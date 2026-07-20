@@ -16,8 +16,23 @@ import blogRoutes from "./routes/blog";
 
 const app = express();
 
-// Middleware
-app.use(cors({ origin: config.clientUrl, credentials: true }));
+// CORS - Allow multiple origins
+const allowedOrigins = [
+  config.clientUrl,
+  "https://nexus-ai-clirnt.vercel.app",
+  "http://localhost:3000",
+].filter(Boolean);
+
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true,
+}));
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());

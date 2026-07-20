@@ -240,7 +240,7 @@ class AIService {
       title: history.length <= 1 ? message.slice(0, 50) : undefined,
     });
 
-    return { ...response, conversationId: convId };
+    return { ...response, conversationId: convId! };
   }
 
   // Generate response
@@ -322,9 +322,9 @@ Rules:
       const model = genAI!.getGenerativeModel({ model: "gemini-2.0-flash" });
 
       // Build chat history for Gemini
-      const chatHistory: { role: string; parts: string }[] = [
-        { role: "user", parts: systemPrompt },
-        { role: "model", parts: "I understand. I'm the NexusAI AI Assistant, ready to help users with products, recommendations, and questions about the marketplace and technology." },
+      const chatHistory: { role: string; parts: { text: string }[] }[] = [
+        { role: "user", parts: [{ text: systemPrompt }] },
+        { role: "model", parts: [{ text: "I understand. I'm the NexusAI AI Assistant, ready to help users with products, recommendations, and questions about the marketplace and technology." }] },
       ];
 
       // Add conversation history (last 10 messages)
@@ -332,7 +332,7 @@ Rules:
       for (const msg of recentHistory) {
         chatHistory.push({
           role: msg.role === "user" ? "user" : "model",
-          parts: msg.content,
+          parts: [{ text: msg.content }],
         });
       }
 
@@ -454,11 +454,11 @@ Rules:
       if (last.includes("found") && last.includes("product")) {
         const products = last.match(/\*\*(.+?)\*\*/g);
         if (products) {
-          const names = products.map((p) => p.replace(/\*\*/g, ""));
+          const names = products.map((p: string) => p.replace(/\*\*/g, ""));
           return {
-            message: `Here are the products I found:\n\n${names.map((n, i) => `${i + 1}. **${n}**`).join("\n")}\n\nWhat would you like to do?\n- Say **"Tell me about [name]"** for details\n- Say **"Find [keyword]"** to search more\n- Say **"Price of [name]"** for pricing`,
+            message: `Here are the products I found:\n\n${names.map((n: string, i: number) => `${i + 1}. **${n}**`).join("\n")}\n\nWhat would you like to do?\n- Say **"Tell me about [name]"** for details\n- Say **"Find [keyword]"** to search more\n- Say **"Price of [name]"** for pricing`,
             conversationId: "",
-            suggestions: names.slice(0, 3).map((n) => `Tell me about ${n}`),
+            suggestions: names.slice(0, 3).map((n: string) => `Tell me about ${n}`),
           };
         }
       }

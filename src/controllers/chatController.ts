@@ -73,9 +73,9 @@ export const chatController = {
 
           const systemPrompt = `You are the NexusAI AI Assistant — a helpful, friendly, and knowledgeable chatbot for the NexusAI digital product marketplace. Be concise but helpful (2-4 paragraphs max). Use markdown formatting.`;
 
-          const chatHistory = [
-            { role: "user", parts: systemPrompt },
-            { role: "model", parts: "I understand. I'm the NexusAI AI Assistant, ready to help." },
+          const chatHistory: { role: string; parts: { text: string }[] }[] = [
+            { role: "user", parts: [{ text: systemPrompt }] },
+            { role: "model", parts: [{ text: "I understand. I'm the NexusAI AI Assistant, ready to help." }] },
           ];
 
           // Add history
@@ -83,7 +83,7 @@ export const chatController = {
           for (const msg of history.reverse()) {
             chatHistory.push({
               role: msg.role === "user" ? "user" : "model",
-              parts: msg.content,
+              parts: [{ text: msg.content }],
             });
           }
 
@@ -207,7 +207,7 @@ export const chatController = {
 
           const model = genAI.getGenerativeModel({
             model: "gemini-2.0-flash-preview-image-generation",
-            generationConfig: { responseModalities: ["TEXT", "IMAGE"] },
+            generationConfig: { responseModalities: ["TEXT", "IMAGE"] } as any,
           });
 
           const result = await model.generateContent(prompt);
@@ -252,8 +252,12 @@ export const chatController = {
       const userId = req.user?._id;
       const { limit, category, minPrice, maxPrice, sort } = req.query;
 
+      if (!userId) {
+        return res.status(401).json({ success: false, message: "User not authenticated" });
+      }
+
       const recommendations = await aiService.getRecommendations(
-        userId,
+        userId.toString(),
         parseInt(limit as string) || 6,
         { category: category as string, minPrice: minPrice ? Number(minPrice) : undefined, maxPrice: maxPrice ? Number(maxPrice) : undefined, sort: sort as string }
       );

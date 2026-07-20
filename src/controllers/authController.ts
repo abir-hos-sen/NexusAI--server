@@ -8,7 +8,7 @@ import { AuthRequest } from "../middleware/auth";
 const googleClient = new OAuth2Client(config.googleClientId);
 
 const generateToken = (userId: string) => {
-  return jwt.sign({ userId }, config.jwtSecret, { expiresIn: config.jwtExpiresIn });
+  return jwt.sign({ userId }, config.jwtSecret, { expiresIn: config.jwtExpiresIn as any });
 };
 
 export const authController = {

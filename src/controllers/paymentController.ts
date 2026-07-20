@@ -74,7 +74,7 @@ export const paymentController = {
       // Real Stripe checkout
       const session = await stripeService.createCheckoutSession(
         checkoutItems,
-        userId.toString(),
+        userId!.toString(),
         `${config.clientUrl}/dashboard?success=true`,
         `${config.clientUrl}/explore`
       );

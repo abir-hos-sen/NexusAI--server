@@ -1,57 +1,37 @@
 import { Router, Response } from "express";
 import multer from "multer";
-import path from "path";
-import fs from "fs";
-import { v4 as uuid } from "uuid";
 import { authenticate, AuthRequest } from "../middleware/auth";
 
 const router = Router();
 
-// Ensure uploads directory exists
-const uploadsDir = path.join(__dirname, "../../uploads");
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
-
-// Configure multer storage
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadsDir);
-  },
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    cb(null, `${uuid()}${ext}`);
-  },
-});
-
-const fileFilter = (req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
-  const allowed = ["image/jpeg", "image/png", "image/gif", "image/webp", "image/svg+xml"];
-  if (allowed.includes(file.mimetype)) {
-    cb(null, true);
-  } else {
-    cb(new Error("Only image files (JPG, PNG, GIF, WebP, SVG) are allowed"));
-  }
-};
-
+// Use memory storage (works on Vercel serverless)
 const upload = multer({
-  storage,
-  fileFilter,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  storage: multer.memoryStorage(),
+  fileFilter: (_req, file, cb) => {
+    const allowed = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+    if (allowed.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error("Only image files (JPG, PNG, GIF, WebP) are allowed"));
+    }
+  },
+  limits: { fileSize: 2 * 1024 * 1024 }, // 2MB
 });
 
-// Upload single image
+// Upload single image (returns base64 data URI)
 router.post("/image", authenticate, upload.single("image"), (req: AuthRequest, res: Response) => {
   try {
     if (!req.file) {
       return res.status(400).json({ success: false, message: "No file uploaded" });
     }
 
-    const imageUrl = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
+    const base64 = req.file.buffer.toString("base64");
+    const dataUri = `data:${req.file.mimetype};base64,${base64}`;
 
     res.json({
       success: true,
-      imageUrl,
-      filename: req.file.filename,
+      imageUrl: dataUri,
+      filename: req.file.originalname,
       originalName: req.file.originalname,
       size: req.file.size,
     });
@@ -60,7 +40,7 @@ router.post("/image", authenticate, upload.single("image"), (req: AuthRequest, r
   }
 });
 
-// Upload multiple images
+// Upload multiple images (returns base64 data URIs)
 router.post("/images", authenticate, upload.array("images", 10), (req: AuthRequest, res: Response) => {
   try {
     const files = req.files as Express.Multer.File[];
@@ -69,8 +49,8 @@ router.post("/images", authenticate, upload.array("images", 10), (req: AuthReque
     }
 
     const imageUrls = files.map((file) => ({
-      url: `${req.protocol}://${req.get("host")}/uploads/${file.filename}`,
-      filename: file.filename,
+      url: `data:${file.mimetype};base64,${file.buffer.toString("base64")}`,
+      filename: file.originalname,
       originalName: file.originalname,
       size: file.size,
     }));
